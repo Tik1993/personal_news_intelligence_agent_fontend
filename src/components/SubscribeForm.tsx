@@ -7,7 +7,7 @@ const SubscribeForm = () => {
   const emailRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
     const name = nameRef.current?.value.trim() || "";
@@ -21,21 +21,39 @@ const SubscribeForm = () => {
     }
 
     // If you also want to require name, uncomment:
-    // if (!name) {
-    //   setError("Please enter your name.");
-    //   setMessage("");
-    //   return;
-    // }
+    if (!name) {
+      setError("Please enter your name.");
+      setMessage("");
+      return;
+    }
 
-    const person = { name, email };
-    console.log(person);
+    try {
+      const response = await fetch(
+        "https://personal-news-intelligence-agent-ba.vercel.app/subscribers",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email }),
+        }
+      );
 
-    setMessage("Thanks for subscribing!");
-    setError("");
+      const data = await response.json();
 
-    // Clear inputs
-    if (nameRef.current) nameRef.current.value = "";
-    if (emailRef.current) emailRef.current.value = "";
+      if (response.ok) {
+        setMessage("✅ Thanks for subscribing!");
+        setError("");
+        if (nameRef.current) nameRef.current.value = "";
+        if (emailRef.current) emailRef.current.value = "";
+      } else {
+        setError(data.message || "❌ Something went wrong");
+        setMessage("");
+      }
+    } catch (err) {
+      setError("❌ Network error. Please try again.");
+      setMessage("");
+    }
   };
 
   return (
